@@ -4,4 +4,5 @@ In [92]: binascii.a2b_hex(bytearray(i))
 Out[92]: "I'm killing your brain like a poisonous mushroom"
 In [93]: base64.b64encode(binascii.a2b_hex(bytearray(i)))
 Out[93]: 'SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t'
+[hex(x^y) for x in bytearray(binascii.a2b_hex(a)) for y in bytearray(binascii.a2b_hex(b))]
 ```
