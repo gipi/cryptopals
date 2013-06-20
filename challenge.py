@@ -387,7 +387,7 @@ def challenge6():
     # https://gist.github.com/tqbf/3132752/raw/cecdb818e3ee4f5dda6f0847bfd90a83edb87e73/gistfile1.txt
     with open('challenge6.txt', 'rb') as f:
         code = base64.b64decode(f.read())
-        import pdb;pdb.set_trace()
+
         print(' [I] size: %d' % len(code))
 
         probable_keysize = 0
