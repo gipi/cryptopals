@@ -3,14 +3,6 @@ I think the whole point about this exercises is
 
  - think about difference between representation of data and data
  - XORing
-
-For the dictionary we need NLTK and wordnet
-
-    >>> import nltk
-    >>> nltk.donwload()
-
-and chose "download" and then "wordnet".
-
 """
 
 import binascii
@@ -22,22 +14,29 @@ decode = lambda x: bytearray(binascii.a2b_hex(x))
 
 # return a hex "visual" representation by string of "x"
 # ENCODING: is the process by which information from a source is converted into symbols to be communicated.
+#           in our case we are trasmitting using ASCII the binary data
 encode = lambda x: binascii.b2a_hex(x)
 
 # return a representation of the XORing of two binary hexadecimal representation
 def xor(text, key):
-    """The text dominates over key so that the lengths don't match we can choose"""
+    """XORs a hexadecimal representation of a text.
+    
+    The text dominates over key so that the lengths don't match we can choose"""
     len_text = len(text)
     len_key = len(key)
 
     modifier = 1
     if len_key != len_text:
-        modifier = (len_key/len_text) + len_text
+        modifier = int((len_key/len_text) + len_text)
 
-    return "".join([
-        '%02x' % (x^y,) for (x,y) in zip(
-            decode(text),
-            (decode(key)*modifier)[:len_text])
+    new_key = key*modifier
+
+    #import pdb;pdb.set_trace()
+
+    return bytes([
+        x^y for (x,y) in zip(
+            text,
+            new_key[:len_text])
         ])
 
 _challenge_count = 0
@@ -48,14 +47,15 @@ def challenge(x):
         _challenge_count += 1
         count = _challenge_count
 
-        print '[+] challenge %d' % count
+        print('[+] challenge %d' % count)
         x()
     return _inner
 
-
+# Cooking MC's like a pound of bacon
 def is_ascii(x):
-    # TODO: more reliable check for not ascii but plausible (e.g. \n)
-    xx = str(bytearray(filter(lambda z: 0x20 <= z < 0x7f or z == 0x0a, x)))
+    d = bytearray(b'''!,.(){}[]<>:; 0123456789abcdefgyhilmnopqrstuwvxzjkABCDEFGHILMNOPQRSTUXVWZJKY\'"\n\t''')
+    # python3 filter changed behaviour, now returns an iterable
+    xx = bytes(list(filter(lambda z:  z in d, x)))
     return xx == x
 
 def how_much_is_actually_english(phrase):
@@ -67,17 +67,15 @@ def how_much_is_actually_english(phrase):
     The score goes from 0 to 100 with 0 not english and 100 "we think it's very probably
     english text".
     """
-    from nltk.corpus import wordnet
-
-    words = phrase.split(' ')
-    check = lambda x: wordnet.synsets(x)
-
-    return float(len(filter(check, words)))/float(len(words))*100
+    return 100
 
 def break_one_char_xor(text, threshold):
     results = []
     for c in range(256):
-        xored = decode(xor(text, '%02x' % c))
+        #print('  [D] key: %02x' % c)
+        xored = xor(text, decode(bytes('%02x' % c, 'utf8')))
+
+        #print('  [D] \'%s\'' % xored)
 
         if is_ascii(xored) and how_much_is_actually_english(str(xored)) > threshold:
             results.append(xored)
@@ -116,3 +114,11 @@ def chunks(l, n):
     """
     for i in xrange(0, len(l), n):
         yield l[i:i+n]
+
+def transpose(block, size):
+    for idx in range(0, size):
+        result = []
+        for idx_bis in range(idx, len(block), size):
+            result.append(block[idx_bis])
+
+        yield bytearray(result)
