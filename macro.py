@@ -14,7 +14,7 @@ decode = lambda x: bytearray(binascii.a2b_hex(x))
 
 # return a hex "visual" representation by string of "x"
 # ENCODING: is the process by which information from a source is converted into symbols to be communicated.
-#           in our case we are trasmitting using ASCII the binary data
+#           in our case we are trasmitting using ASCII/Base64 the binary data
 encode = lambda x: binascii.b2a_hex(x)
 
 # return a representation of the XORing of two binary hexadecimal representation
