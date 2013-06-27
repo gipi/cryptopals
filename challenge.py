@@ -416,6 +416,15 @@ def challenge6():
         print(' [+] breaked: \'%s\'' % result)
         return
 
+@challenge
+def challenge7():
+    cyphertext = decodeBase64file('challenge7.txt')
+    from Crypto.Cipher import AES
+
+    key = "YELLOW SUBMARINE"
+    aes = AES.new(key, AES.MODE_ECB)
+
+    print(' [+]: ', aes.decrypt(cyphertext))
 
 if __name__ == "__main__":
     challenge1()
@@ -424,3 +433,4 @@ if __name__ == "__main__":
     challenge4()
     challenge5()
     challenge6()
+    challenge7()
