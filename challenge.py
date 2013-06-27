@@ -426,6 +426,24 @@ def challenge7():
 
     print(' [+]: ', aes.decrypt(cyphertext))
 
+@challenge
+def challenge8():
+    cyphertexts = []
+    with open('challenge8.txt', 'rb') as f:
+        # remove the '\n' part
+        cyphertexts = list([x[:-1] for x in f.readlines()])
+
+    matches = []
+    for cyphertext in cyphertexts:
+        m = find_multiple_occurences(cyphertext, 16)
+        # check that there are blocks with more than one repetition
+        #import ipdb;ipdb.set_trace()
+        if len(list(filter(lambda x: x > 1, list(m.values())))) > 0:
+            print(' [+] found probably ECB: \'%s\'' % cyphertext)
+        matches.append(m)
+
+
+
 if __name__ == "__main__":
     challenge1()
     challenge2()
@@ -434,3 +452,4 @@ if __name__ == "__main__":
     challenge5()
     challenge6()
     challenge7()
+    challenge8()

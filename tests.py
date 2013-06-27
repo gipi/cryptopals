@@ -9,6 +9,9 @@ from macro import (
     is_ascii,
     transpose,
     decodeBase64file,
+    chunks,
+    find_multiple_occurences_positions,
+    find_multiple_occurences,
 )
 
 class CodeTests(unittest.TestCase):
@@ -87,3 +90,17 @@ class CodeTests(unittest.TestCase):
         self.assertEqual(plaintext, encodedtext)
 
         os.unlink(fp.name)
+
+    def test_occurences(self):
+        msg = 'aaaabbbbccccaaaa'
+        chunkz = list(chunks(msg, 4))
+        self.assertEqual(len(chunkz), 4)
+
+        result = find_multiple_occurences_positions(msg, 4)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(len(result['aaaa']), 2)
+        self.assertEqual(len(result['bbbb']), 1)
+
+        result = find_multiple_occurences(msg, 4)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result['aaaa'], 2)
