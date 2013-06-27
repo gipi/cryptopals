@@ -385,36 +385,36 @@ I go crazy when I hear a cymbal"""
 @challenge
 def challenge6():
     # https://gist.github.com/tqbf/3132752/raw/cecdb818e3ee4f5dda6f0847bfd90a83edb87e73/gistfile1.txt
-    with open('challenge6.txt', 'rb') as f:
-        code = base64.b64decode(f.read())
+    code = decodeBase64file('challenge6.txt')
 
-        print(' [I] size: %d' % len(code))
+    print(' [I] size: %d' % len(code))
 
-        probable_keysize = 0
-        min_distance = 10000#FIXME
+    probable_keysize = 0
+    min_distance = 10000#FIXME
 
-        for keysize in range(2, 41):
-            first_block = code[0:keysize]
-            second_block = code[keysize:2*keysize]
-            distance = hamming_distance(first_block, second_block)/keysize
-            print('  [+] keysize: %d, distance: %d' % (
-                keysize,
-                distance,
-            ))
-            if distance < min_distance:
-                min_distance = distance
-                probable_keysize =  keysize
+    for keysize in range(2, 41):
+        first_block = code[0:keysize]
+        second_block = code[keysize:2*keysize]
+        distance = hamming_distance(first_block, second_block)/keysize
+        print('  [+] keysize: %d, distance: %d' % (
+            keysize,
+            distance,
+        ))
+        if distance < min_distance:
+            min_distance = distance
+            probable_keysize =  keysize
 
-        print(' [+] probable key size: %d' % probable_keysize)
+    print(' [+] probable key size: %d' % probable_keysize)
 
-        # now break "keysize" times the XOR with one byte key
-        breaked = []
-        for column in transpose(code, probable_keysize):
-            text = column
-            #print('  [I]: \'%s\'' % text)
-            result = break_one_char_xor(text, 20)
-            breaked.append(result)
-            print(' [+] breaked: \'%s\'' % result)
+    # now break "keysize" times the XOR with one byte key
+    breaked = []
+    for column in transpose(code, probable_keysize):
+        text = column
+        #print('  [I]: \'%s\'' % text)
+        result = break_one_char_xor(text, 20)
+        breaked.append(result)
+        print(' [+] breaked: \'%s\'' % result)
+        return
 
 
 if __name__ == "__main__":

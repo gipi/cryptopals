@@ -1,4 +1,5 @@
 import unittest
+import os
 
 from macro import (
     encode,
@@ -7,6 +8,7 @@ from macro import (
     hamming_distance,
     is_ascii,
     transpose,
+    decodeBase64file,
 )
 
 class CodeTests(unittest.TestCase):
@@ -69,3 +71,19 @@ class CodeTests(unittest.TestCase):
         it = transpose(text, 5)
         self.assertEqual(next(it), b"05")
         self.assertEqual(next(it), b"16")
+
+    def test_base64(self):
+        import tempfile
+        import base64
+
+        plaintext = b'this is a base64 encoded text'
+        encodedtext = ''
+
+        with tempfile.NamedTemporaryFile(delete=False) as fp:
+            fp.write(base64.b64encode(plaintext))
+            fp.flush()
+            encodedtext = decodeBase64file(fp.name)
+
+        self.assertEqual(plaintext, encodedtext)
+
+        os.unlink(fp.name)

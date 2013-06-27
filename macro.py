@@ -17,6 +17,13 @@ decode = lambda x: bytearray(binascii.a2b_hex(x))
 #           in our case we are trasmitting using ASCII/Base64 the binary data
 encode = lambda x: binascii.b2a_hex(x)
 
+def decodeBase64file(filepath):
+    filecontents = ""
+    with open(filepath, 'rb') as f:
+        filecontents = base64.b64decode(f.read())
+
+    return filecontents
+
 # return a representation of the XORing of two binary hexadecimal representation
 def xor(text, key):
     """XORs a hexadecimal representation of a text.
