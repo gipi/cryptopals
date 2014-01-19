@@ -1,5 +1,17 @@
 from macro import *
 
+import logging
+
+CHALLENGE = 5
+logging.addLevelName(CHALLENGE, 'CHALLENGE')
+
+def challenge_log(self, message, *args, **kwargs):
+    self.log(CHALLENGE, message, *args, **kwargs)
+
+logging.Logger.challenge = challenge_log
+
+logger = logging.getLogger()
+logger.setLevel(CHALLENGE)
 @challenge
 def challenge1():
     # why "in" give me error?
