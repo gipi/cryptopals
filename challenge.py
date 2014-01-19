@@ -34,11 +34,9 @@ def challenge2():
 @challenge
 def challenge3():
     a = b'1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736'
-    results = break_one_char_xor(decode(a), 50)
+    result = break_one_char_xor(decode(a), 99)
 
-    assert len(results) > 0
-    for result in results:
-        print(result)
+    logger.challenge(result)
 
 @challenge
 def challenge4():
@@ -375,17 +373,23 @@ def challenge4():
     results = {}
     for text in _in:
         print('\r [%s]' % text, end='')
-        result = break_one_char_xor(decode(text), 20)
-        if result:
-            results[text] = result
+        score, text, key = break_one_char_xor(decode(text), 1)[0]
+        results[text] = (score, key)
 
     # clean up the line
     print('\r'),
 
+    best_text_fit = None
+    best_score = float('inf')
+    best_key = None
+
     for key in results:
-        print(key, '\t')
-        for result in results[key]:
-            print('\t\'%s\'' % (result,))
+        if best_score > results[key][0]:
+            best_score = results[key][0]
+            best_text_fit = key
+            best_key = results[key][1]
+
+    print('> %s with key %s' % (best_text_fit, best_key))
 
 @challenge
 def challenge5():
@@ -401,32 +405,42 @@ def challenge6():
 
     print(' [I] size: %d' % len(code))
 
-    probable_keysize = 0
-    min_distance = 10000#FIXME
+    keys = guess_keysize(code)
 
-    for keysize in range(2, 41):
-        first_block = code[0:keysize]
-        second_block = code[keysize:2*keysize]
-        distance = hamming_distance(first_block, second_block)/keysize
-        print('  [+] keysize: %d, distance: %d' % (
-            keysize,
-            distance,
-        ))
-        if distance < min_distance:
-            min_distance = distance
-            probable_keysize =  keysize
+    logger.debug('keys: %s' % '\n'.join(['%d: %f' % (x[0], x[1]) for x in keys]))
 
-    print(' [+] probable key size: %d' % probable_keysize)
+    for key in keys:
+        probable_keysize = key[0]
 
-    # now break "keysize" times the XOR with one byte key
-    breaked = []
-    for column in transpose(code, probable_keysize):
-        text = column
-        #print('  [I]: \'%s\'' % text)
-        result = break_one_char_xor(text, 20)
-        breaked.append(result)
-        print(' [+] breaked: \'%s\'' % result)
-        return
+        print(' [+] use key size: %d' % probable_keysize)
+
+        #import ipdb;ipdb.set_trace()
+
+        # create a matrix of probable_keysize columns
+        m = list(matrixify(code, probable_keysize))
+
+        print(len(m))
+
+        # now break "keysize" times the XOR with one byte key
+        breaked = []
+        for column in transpose(m):
+            #print('  [I]: \'%d\'' % len(column))
+            result = break_one_char_xor(column)
+            breaked.append(result[0][1])
+            #print(' [+] breaked: \'%s\' with %d bytes' % (result, len(result[0][1])))
+
+        #print()
+
+        m = transpose(breaked)
+
+        logger.challenge(b''.join(m))
+
+#        _sets = [(x[0][1],x[1][1], x[2][1]) for x in breaked]
+#        permutation_sets = product(_sets)
+#        for x in permutation_sets:
+#            m = transpose(x)
+#            print(b''.join(m)[:50])
+#            print()
 
 @challenge
 def challenge7():
@@ -445,14 +459,11 @@ def challenge8():
         # remove the '\n' part
         cyphertexts = list([x[:-1] for x in f.readlines()])
 
-    matches = []
     for cyphertext in cyphertexts:
         m = find_multiple_occurences(cyphertext, 16)
         # check that there are blocks with more than one repetition
-        #import ipdb;ipdb.set_trace()
         if len(list(filter(lambda x: x > 1, list(m.values())))) > 0:
             print(' [+] found probably ECB: \'%s\'' % cyphertext)
-        matches.append(m)
 
 
 
