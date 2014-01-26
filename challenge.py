@@ -1,5 +1,6 @@
 from macro import *
 from ecb import aes_ecb_decrypt
+from cbc import aes_cbc_decrypt
 
 import logging
 
@@ -464,6 +465,16 @@ def challenge8():
         if len(list(filter(lambda x: x > 1, list(m.values())))) > 0:
             print(' [+] found probably ECB: \'%s\'' % cyphertext)
 
+@challenge
+def challenge10():
+    ciphertext = decodeBase64file('challenge10.txt')
+
+    key = b'YELLOW SUBMARINE'
+    iv  = b'\x00'*16
+
+    plaintext = aes_cbc_decrypt(ciphertext, key, iv)
+
+    logger.info('AES-CBC-128: %s' % plaintext)
 
 
 if __name__ == "__main__":
@@ -475,3 +486,4 @@ if __name__ == "__main__":
     challenge6()
     challenge7()
     challenge8()
+    challenge10()
