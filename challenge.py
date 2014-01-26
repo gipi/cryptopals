@@ -1,4 +1,5 @@
 from macro import *
+from ecb import aes_ecb_decrypt
 
 import logging
 
@@ -445,12 +446,10 @@ def challenge6():
 @challenge
 def challenge7():
     cyphertext = decodeBase64file('challenge7.txt')
-    from Crypto.Cipher import AES
 
     key = "YELLOW SUBMARINE"
-    aes = AES.new(key, AES.MODE_ECB)
 
-    print(' [+]: ', aes.decrypt(cyphertext))
+    print(' [+]: ', aes_ecb_decrypt(cyphertext))
 
 @challenge
 def challenge8():
