@@ -186,7 +186,7 @@ def break_one_char_xor(text, threshold=1):
         #print(xored)
         #print('%s %f vs %f' % (key, min_score, score))
 
-        results.append((score, xored, key))
+        results.append((score, xored, bytes([c])))
 
 
     import operator

@@ -1,6 +1,7 @@
 from macro import *
 from ecb import aes_ecb_encrypt, aes_ecb_decrypt
 from cbc import cbc, aes_cbc_encrypt, aes_cbc_decrypt
+import break_vigenere
 
 import logging
 
@@ -417,35 +418,8 @@ def challenge6():
     # https://gist.github.com/tqbf/3132752/raw/cecdb818e3ee4f5dda6f0847bfd90a83edb87e73/gistfile1.txt
     code = decodeBase64file('challenge6.txt')
 
-    print(' [I] size: %d' % len(code))
+    break_vigenere.break_code(code)
 
-    keys = guess_keysize(code)
-
-    logger.debug('keys: %s' % '\n'.join(['%d: %f' % (x[1], x[1]) for x in keys]))
-
-    for key in keys:
-        probable_keysize = key[0]
-
-        print(' [+] use key size: %d' % probable_keysize)
-
-        # create a matrix of probable_keysize columns
-        m = list(matrixify(code, probable_keysize))
-
-        print(len(m))
-
-        # now break "keysize" times the XOR with one byte key
-        breaked = []
-        for column in transpose(m):
-            # print('  [I]: \'%d\'' % len(column))
-            result = break_one_char_xor(column)
-            breaked.append(result[0][1])
-        # print(' [+] breaked: \'%s\' with %d bytes' % (result, len(result[0][1])))
-
-        # print()
-
-        m = transpose(breaked)
-
-        logger.challenge(b''.join(m))
 
 
 # _sets = [(x[0][1],x[1][1], x[2][1]) for x in breaked]
