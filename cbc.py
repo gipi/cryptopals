@@ -4,58 +4,15 @@ set of challenges.
 from macro import (
     xor,
     chunks,
+    pkcs7,
+	depkcs7,
 )
 from ecb import aes_ecb_encrypt, aes_ecb_decrypt
 import logging
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
-
-def pkcs7(message, block_size):
-    '''
-    Described in
-    
-        http://tools.ietf.org/html/rfc5652#section-6.3
-
-    Usage:
-
-        >>> pkcs7(b'\\x01\\x02\\x03\\x04', 4)
-        b'\\x01\\x02\\x03\\x04\\x04\\x04\\x04\\x04'
-        >>> pkcs7(b'\\x01\\x02\\x03\\x04\\x05', 4)
-        b'\\x01\\x02\\x03\\x04\\x05\\x03\\x03\\x03'
-        >>> pkcs7(b'\\x01\\x02\\x03', 4)
-        b'\\x01\\x02\\x03\\x01'
-    '''
-    # calculate how much bytes remain to full the size
-    len_message = len(message)
-    pad = block_size - (len_message % block_size)
-
-    logger.debug('pkcs7: #=%d with pad: %d' % (len_message, pad))
-
-    padding = bytes([pad,])*pad
-
-    return message + padding
-
-def depkcs7(message):
-    '''Reverse the operation of pkcs7.
-
-        >>> depkcs7(b'\\x00\\x00\\x00\\x00\\x04\\x04\\x04\\x04')
-        b'\\x00\\x00\\x00\\x00'
-        >>> depkcs7(b'\\x00\\x00\\x00\\x00\\x04\\x04\\x04')
-        Traceback (most recent call last):
-            ...
-        Exception: Padding wrong
-    '''
-    pad = int(message[-1])
-
-    #import ipdb;ipdb.set_trace()
-
-    # check that the padding make sense
-    for i in range(1, pad + 1):
-        if message[-i] != pad:
-            raise Exception('Padding wrong')# TODO: make custom exception
-
-    return message[:-pad]
 
 def cbc_decrypt(ciphertext, key, iv, cipher_func):
     '''Implementation of the CBC mode to decrypt.
@@ -86,8 +43,32 @@ def cbc_decrypt(ciphertext, key, iv, cipher_func):
 
         iv = c_i
 
+    #plaintext_padded = pkcs7(plaintext, block_size)
 
     return depkcs7(plaintext)
+
+def cbc(plaintext, key, iv, cipher_func):
+    '''Implementation of the CBC mode'''
+    if len(iv) != len(key):
+        raise ValueError('IV and the key must have the same size')
+
+    block_size = len(key)
+
+    plaintext_padded = pkcs7(plaintext, block_size)
+
+    ciphertext = b''
+
+    for chunk in chunks(plaintext_padded, block_size):
+        xored = xor(chunk, iv)
+        cipherblock = cipher_func(xored, key)
+        ciphertext += cipherblock
+
+        iv = cipherblock
+
+    return ciphertext
+
+def aes_cbc_encrypt(plaintext, key, iv):
+    return cbc(plaintext, key, iv, aes_ecb_encrypt)
 
 def aes_cbc_decrypt(plaintext, key, iv):
     return cbc_decrypt(plaintext, key, iv, aes_ecb_decrypt)

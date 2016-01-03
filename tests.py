@@ -15,6 +15,7 @@ from macro import (
     find_multiple_occurences,
     find_frequencies,
     matrixify,
+    guess_keysize,
 )
 
 class CodeTests(unittest.TestCase):
@@ -169,3 +170,12 @@ class CodeTests(unittest.TestCase):
 
         self.assertEqual(freq['ab'], 0.3333333333333333)
         self.assertEqual(freq['bc'], 0.3333333333333333)
+
+class HammingTest(unittest.TestCase):
+    def test_hamming_keysize(self):
+        text = b'''I read that to break repeating-key xor you can do the following: try a keysize n and compute the hamming distance between the first n bits of the encrypted string and the bits n+1 to 2n of the encrypted string and normalize by keysize. The true keysize probably minimizes this. Why? It also suggests to average a couple of the near minimal values computed in this way. But why should keysizes that are not correct help compute the true keysize?'''
+        #key = b'k5cWCPDUenwCr74Y1V'
+        key = b'\xe4\xe9\x12\x79\xf1\x39\xee\x2d\xa6\xfb\x35\xae\x59\x7a\xf1\xf5\x58\x48'
+        ciphertext = xor(text, key)
+        print('key length: %d' % len(key))
+        print(guess_keysize(ciphertext))

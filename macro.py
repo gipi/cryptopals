@@ -1,3 +1,4 @@
+# encoding: utf-8
 """
 I think the whole point about this exercises is
 
@@ -13,6 +14,10 @@ I think the whole point about this exercises is
     <class 'int'>
     >>> type(a[0:1])
     <class 'bytes'>
+    >>> bytes(4)
+    b'\\x00\\x00\\x00\\x00'
+    >>> bytes([4,])
+    b'\\x04'
 
 bytes type is an immutable sequence of integers
 bytearray type is a mutable sequence of integers
@@ -26,8 +31,18 @@ to strings, they have a decode() method.
 **HERE ALL IS PASSED AS BYTES AND RETURNED AS BYTE**
 """
 
+_DEBUG = False
+
 import binascii
 import base64
+import math
+from Crypto.Random import random
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+logger = logging.getLogger(__name__)
+
 
 
 # return an byte iterable from an hexadecimal representation
@@ -72,17 +87,14 @@ def xor(text, key):
             new_key[:len_text])
         ])
 
-_challenge_count = 0
-def challenge(x):
-    def _inner():
-        global _challenge_count
 
-        _challenge_count += 1
-        count = _challenge_count
-
-        print('[+] challenge %d' % count)
-        x()
-    return _inner
+def challenge(count):
+    def _challenge(x):
+        def _inner(*args, **kwargs):
+            print('[+] challenge %d' % count)
+            return x(*args, **kwargs)
+        return _inner
+    return _challenge
 
 # Cooking MC's like a pound of bacon
 def is_ascii(x):
@@ -212,15 +224,30 @@ def hamming_distance(a, b):
 
     return result
 
-def guess_keysize(text, start=2, end=41):
-    '''Returns an ordered list of probably keysize for a supposed XORed plaintext'''
-    results = []
-    for keysize in range(start, end):
-        first_block = text[0:keysize]
-        second_block = text[keysize:2*keysize]
-        distance = hamming_distance(first_block, second_block)/keysize
+def hamming_distance_bis(a, b):
+    if len(a) != len(b):
+        raise ValueError('the texts have different lengths')
+    c = xor(a, b)
+    # calculate the number of 1s in the xor of the two texts
+    return len(filter(lambda x: x == '1', ''.join([bin(x)[2:] for x in c])))
 
-        results.append([keysize, distance])
+def guess_keysize(text, start=2, end=41):
+    '''Returns an ordered list of probably keysize for a supposed XORed plaintext
+    
+    http://crypto.stackexchange.com/questions/8115/repeating-key-xor-and-hamming-distance
+    '''
+    results = []
+    # for each keysize
+    for keysize in range(start, end):
+        distance = 0
+        block_n = int(math.floor(len(text)/keysize))
+        # calculate the average hamming distance
+        for block_index in range(block_n):
+            first_block = text[block_index * keysize:(block_index + 1) * keysize]
+            second_block = text[(block_index + 1) * keysize:(block_index + 2) * keysize]
+            distance += hamming_distance(first_block, second_block)/keysize
+
+        results.append([keysize, distance/block_n])
 
     import operator
 
@@ -374,3 +401,56 @@ def product(l):
         result.append(r)
 
     return result
+
+
+def pkcs7(message, block_size):
+    '''
+    Described in
+
+        http://tools.ietf.org/html/rfc5652#section-6.3
+
+    Usage:
+
+        >>> pkcs7(b'\\x01\\x02\\x03\\x04', 4)
+        b'\\x01\\x02\\x03\\x04\\x04\\x04\\x04\\x04'
+        >>> pkcs7(b'\\x01\\x02\\x03\\x04\\x05', 4)
+        b'\\x01\\x02\\x03\\x04\\x05\\x03\\x03\\x03'
+        >>> pkcs7(b'\\x01\\x02\\x03', 4)
+        b'\\x01\\x02\\x03\\x01'
+        >>> pkcs7(b'YELLOW SUBMARINE', 20)
+        b'YELLOW SUBMARINE\\x04\\x04\\x04\\x04'
+    '''
+    # calculate how much bytes remain to full the size
+    len_message = len(message)
+    pad = block_size - (len_message % block_size)
+
+    logger.debug('pkcs7: #=%d with pad: %d' % (len_message, pad))
+
+    padding = bytes([pad,])*pad
+
+    return message + padding
+
+def depkcs7(message):
+    '''Reverse the operation of pkcs7.
+
+        >>> depkcs7(b'\\x00\\x00\\x00\\x00\\x04\\x04\\x04\\x04')
+        b'\\x00\\x00\\x00\\x00'
+        >>> depkcs7(b'\\x00\\x00\\x00\\x00\\x04\\x04\\x04')
+        Traceback (most recent call last):
+            ...
+        Exception: Padding wrong
+    '''
+    pad = int(message[-1])
+
+    # check that the padding make sense
+    for i in range(1, pad + 1):
+        if message[-i] != pad:
+            raise Exception('Padding wrong')# TODO: make custom exception
+
+    return message[:-pad]
+
+def generate_random_bytes(count):
+    return b''.join([bytes([random.getrandbits(8)]) for x in range(count)])
+
+def generate_random_aes_key():
+	return generate_random_bytes(16)
