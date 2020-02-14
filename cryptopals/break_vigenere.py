@@ -1,4 +1,4 @@
-from macro import (
+from .macro import (
     guess_keysize,
     matrixify,
     transpose,
@@ -48,9 +48,11 @@ def break_code(code):
 
         logger.info(result)
 
+
 def usage(progname):
     print('usage: %s <ciphertext>' % progname)
     sys.exit(-1)
+
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:

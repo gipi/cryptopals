@@ -89,15 +89,6 @@ def xor(text, key):
     ])
 
 
-def challenge(count):
-    def _challenge(x):
-        def _inner(*args, **kwargs):
-            print('[+] challenge %d' % count)
-            return x(*args, **kwargs)
-        return _inner
-    return _challenge
-
-
 # Cooking MC's like a pound of bacon
 def is_ascii(x):
     import string

@@ -1,7 +1,8 @@
-from macro import *
-from ecb import aes_ecb_encrypt, aes_ecb_decrypt
-from cbc import cbc, aes_cbc_encrypt, aes_cbc_decrypt
-import break_vigenere
+from cryptopals.macro import *
+from cryptopals.ecb import aes_ecb_encrypt, aes_ecb_decrypt
+from cryptopals.cbc import cbc, aes_cbc_encrypt, aes_cbc_decrypt
+from cryptopals import break_vigenere
+from cryptopals.meta import challenge
 
 import logging
 

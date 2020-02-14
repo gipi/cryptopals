@@ -1,7 +1,7 @@
 '''Implementation of the ECB mode using AES as cipher primitive
 '''
 from Crypto.Cipher import AES
-from macro import (
+from .macro import (
     pkcs7,
     depkcs7,
 )

@@ -1,13 +1,13 @@
 '''Implementation of the CBC mode as described in the second
 set of challenges.
 '''
-from macro import (
+from .macro import (
     xor,
     chunks,
     pkcs7,
-	depkcs7,
+    depkcs7,
 )
-from ecb import aes_ecb_encrypt, aes_ecb_decrypt
+from .ecb import aes_ecb_encrypt, aes_ecb_decrypt
 import logging
 
 logger = logging.getLogger(__name__)
@@ -43,9 +43,10 @@ def cbc_decrypt(ciphertext, key, iv, cipher_func):
 
         iv = c_i
 
-    #plaintext_padded = pkcs7(plaintext, block_size)
+    # plaintext_padded = pkcs7(plaintext, block_size)
 
     return depkcs7(plaintext)
+
 
 def cbc(plaintext, key, iv, cipher_func):
     '''Implementation of the CBC mode'''
@@ -67,8 +68,10 @@ def cbc(plaintext, key, iv, cipher_func):
 
     return ciphertext
 
+
 def aes_cbc_encrypt(plaintext, key, iv):
     return cbc(plaintext, key, iv, aes_ecb_encrypt)
+
 
 def aes_cbc_decrypt(plaintext, key, iv):
     return cbc_decrypt(plaintext, key, iv, aes_ecb_decrypt)
