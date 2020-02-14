@@ -2,7 +2,7 @@ from cryptopals.macro import *
 from cryptopals.ecb import aes_ecb_encrypt, aes_ecb_decrypt
 from cryptopals.cbc import cbc, aes_cbc_encrypt, aes_cbc_decrypt
 from cryptopals import break_vigenere
-from cryptopals.meta import challenge
+from cryptopals.meta import cryptopals
 
 import logging
 
@@ -22,7 +22,7 @@ logger.setLevel(CHALLENGE)
 # http://stackoverflow.com/a/16955098/1935366
 
 
-@challenge(1)
+@cryptopals.challenge(1, 1, 'Convert hex to base64')
 def challenge1():
     inp = b'49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d'
     out = b'SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t'
@@ -30,7 +30,7 @@ def challenge1():
     assert base64.b64encode(decode(inp)) == out
 
 
-@challenge(2)
+@cryptopals.challenge(1, 2, 'Fixed XOR')
 def challenge2():
     """Here we take two decoded binary data representation and xoring them
     and check with another decoded binary data
@@ -42,7 +42,7 @@ def challenge2():
     assert xor(decode(a), decode(b)) == decode(result), xor(decode(a), decode(b))
 
 
-@challenge(3)
+@cryptopals.challenge(1, 3, 'Single-byte XOR cipher')
 def challenge3():
     a = b'1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736'
     result = break_one_char_xor(decode(a), 99)
@@ -50,7 +50,7 @@ def challenge3():
     logger.challenge(result)
 
 
-@challenge(4)
+@cryptopals.challenge(1, 4, 'Detect single-character XOR')
 def challenge4():
     _in = [
         b'0e3647e8592d35514a081243582536ed3de6734059001e3f535ce6271032',
@@ -404,7 +404,7 @@ def challenge4():
     print('> %s with key %s' % (best_text_fit, best_key))
 
 
-@challenge(5)
+@cryptopals.challenge(1, 5, 'Implement repeating-key XOR')
 def challenge5():
     key = b'ICE'
     _in = b"""Burning 'em, if you ain't quick and nimble
@@ -413,7 +413,7 @@ I go crazy when I hear a cymbal"""
                       key)) == b'0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f'
 
 
-@challenge(6)
+@cryptopals.challenge(1, 6, 'Break repeating-key XOR')
 def challenge6():
     # https://gist.github.com/tqbf/3132752/raw/cecdb818e3ee4f5dda6f0847bfd90a83edb87e73/gistfile1.txt
     code = decodeBase64file('challenge6.txt')
@@ -428,7 +428,7 @@ def challenge6():
 #            print(b''.join(m)[:50])
 #            print()
 
-@challenge(7)
+@cryptopals.challenge(1, 7, 'AES in ECB mode')
 def challenge7():
     cyphertext = decodeBase64file('challenge7.txt')
 
@@ -442,7 +442,7 @@ def _is_there_block_with_more_than_one_repetition(message, block_size):
     return len(list(filter(lambda x: x > 1, list(m.values())))) > 0
 
 
-@challenge(8)
+@cryptopals.challenge(1, 8, 'Detect AES in ECB mode')
 def challenge8():
     cyphertexts = []
     with open('challenge8.txt', 'rb') as f:
@@ -454,7 +454,7 @@ def challenge8():
             print(' [+] found probably ECB: \'%s\'' % cyphertext)
 
 
-@challenge(10)
+@cryptopals.challenge(2, 10, 'Implement CBC mode')
 def challenge10():
     ciphertext = decodeBase64file('challenge10.txt')
 
@@ -481,7 +481,7 @@ def encryption_oracle(plaintext):
     return cypher
 
 
-@challenge(11)
+@cryptopals.challenge(2, 11, 'An ECB/CBC detection oracle')
 def challenge11():
     '''The point of this challenge is that if we control the plaintext
     we can take apart ECB from CBC simply using repeated blocks'''
@@ -498,7 +498,7 @@ def challenge11():
     logger.info(tipe)
 
 
-@challenge(12)
+@cryptopals.challenge(2, 12, 'Byte-at-a-time ECB decryption (Simple)')
 def challenge12():
     secret_encoded_string = '''
     Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
@@ -587,7 +587,7 @@ def decrypt_profile(key, ciphertext):
     return parse_cookie(aes_ecb_decrypt(ciphertext, key, pad=True).decode())
 
 
-@challenge(13)
+@cryptopals.challenge(2, 13, 'ECB cut-and-paste')
 def challenge13():
     length_for_full_padding = 32 - len('email=&uid=10&role=user')
 
@@ -620,15 +620,38 @@ def challenge13():
 
 
 if __name__ == "__main__":
-    # challenge1()
-    # challenge2()
-    # challenge3()
-    # challenge4()
-    # challenge5()
-    challenge6()
-    # challenge7()
-    # challenge8()
-    # challenge10()
-    # challenge11()
-    # challenge12()
-    # challenge13()
+    from console import fg, fx, defx
+    from console.screen import sc as screen
+    from console.utils import wait_key, set_title, cls
+    from console.constants import ESC
+
+    exit_keys = (ESC, 'q', 'Q')
+
+    cls()
+
+    set_title('Cryptopals')
+    with screen.location(4, 4):
+        print(
+            fg.lightgreen(f'** {fx.i}Cryptopals challenges! {defx.i}**'),
+            screen.mv_x(5),  # back up, then down
+            screen.down(40),
+            fg.yellow(f'(Hit the {fx.reverse}ESC{defx.reverse} key to exit): '),
+            end='', flush=True,
+        )
+
+    y = 10
+    for sn, challenges in cryptopals.sets():
+        y += 1
+        with screen.location(2, y):
+            print(fg.blue(f'Set {sn}'))
+        y += 2
+        for challenge in challenges:
+            with screen.location(4, y):
+                print(fg.blue(f'#{challenge.n} - {challenge.description}'))
+
+            y += 1
+
+    with screen.hidden_cursor():
+        wait_key(exit_keys)
+
+    cls()
