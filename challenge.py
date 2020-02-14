@@ -23,11 +23,10 @@ logger.setLevel(CHALLENGE)
 
 @challenge(1)
 def challenge1():
-    # why "in" give me error?
-    _in = b'49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d'
+    inp = b'49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d'
     out = b'SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t'
 
-    assert base64.b64encode(decode(_in)) == out
+    assert base64.b64encode(decode(inp)) == out
 
 
 @challenge(2)
@@ -421,7 +420,6 @@ def challenge6():
     break_vigenere.break_code(code)
 
 
-
 # _sets = [(x[0][1],x[1][1], x[2][1]) for x in breaked]
 #        permutation_sets = product(_sets)
 #        for x in permutation_sets:
@@ -485,7 +483,7 @@ def encryption_oracle(plaintext):
 @challenge(11)
 def challenge11():
     '''The point of this challenge is that if we control the plaintext
-	we can take apart ECB from CBC simply using repeated blocks'''
+    we can take apart ECB from CBC simply using repeated blocks'''
     plaintext = b'''0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'''
 
     ciphertext = encryption_oracle(generate_random_bytes(5) + plaintext + generate_random_bytes(3))
@@ -497,6 +495,7 @@ def challenge11():
         tipe = 'FOUND CBC'
 
     logger.info(tipe)
+
 
 @challenge(12)
 def challenge12():
@@ -545,9 +544,9 @@ def challenge12():
 
 def parse_cookie(cookie):
     """
-		>>> parse_cookie("miao=bau&id=10")
-		{'miao': 'bau', 'id': '10'}
-	"""
+        >>> parse_cookie("miao=bau&id=10")
+        {'miao': 'bau', 'id': '10'}
+    """
     result = {}
 
     token = cookie.split('&')
@@ -557,6 +556,7 @@ def parse_cookie(cookie):
 
     return result
 
+
 def encode_cookie(obj):
     '''
         >>> obj = {"email": "foo@bar.com", "uid":10, "role":"admin"}
@@ -564,6 +564,7 @@ def encode_cookie(obj):
         'email=foo@bar.com&uid=10&role=admin'
     '''
     return 'email=%(email)s&uid=%(uid)s&role=%(role)s' % obj
+
 
 def profile_for(email):
     not_allowed = ['&', '=']
@@ -576,11 +577,14 @@ def profile_for(email):
         "role": "user",
     }
 
+
 def encrypted_profile(key, email):
     return aes_ecb_encrypt(bytes(encode_cookie(profile_for(email)), 'utf-8'), key, pad=True)
 
+
 def decrypt_profile(key, ciphertext):
     return parse_cookie(aes_ecb_decrypt(ciphertext, key, pad=True).decode())
+
 
 @challenge(13)
 def challenge13():
@@ -613,6 +617,7 @@ def challenge13():
 
     assert(plaintext['role'] == 'admin')
 
+
 if __name__ == "__main__":
     # challenge1()
     # challenge2()
@@ -625,4 +630,4 @@ if __name__ == "__main__":
     # challenge10()
     # challenge11()
     # challenge12()
-    #challenge13()
+    # challenge13()

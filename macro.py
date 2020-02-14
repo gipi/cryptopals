@@ -30,28 +30,29 @@ to strings, they have a decode() method.
 
 **HERE ALL IS PASSED AS BYTES AND RETURNED AS BYTE**
 """
-
-_DEBUG = False
-
 import binascii
 import base64
 import math
 from Crypto.Random import random
 
 import logging
+
+_DEBUG = False
+
 logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
 
 
-
 # return an byte iterable from an hexadecimal representation
 decode = lambda x: bytearray(binascii.a2b_hex(x))
+
 
 # return a hex "visual" representation by string of "x"
 # ENCODING: is the process by which information from a source is converted into symbols to be communicated.
 #           in our case we are trasmitting using ASCII/Base64 the binary data
 encode = lambda x: binascii.b2a_hex(x)
+
 
 def decodeBase64file(filepath):
     filecontents = ""
@@ -60,32 +61,32 @@ def decodeBase64file(filepath):
 
     return filecontents
 
+
 # return a representation of the XORing of two binary hexadecimal representation
 def xor(text, key):
     """XORs a text with a key.
-    
+
     The text dominates over key so that the lengths don't match we can choose
-    
+
         >>> xor(b'\\x00\\xf0\\x0f\\xff', b'\\x00')
         b'\\x00\\xf0\\x0f\\xff'
         >>> xor(b'\\xf0', b'\\x0f')
         b'\\xff'
-    
     """
     len_text = len(text)
     len_key = len(key)
 
     modifier = 1
     if len_key != len_text:
-        modifier = int((len_key/len_text) + len_text)
+        modifier = int((len_key / len_text) + len_text)
 
-    new_key = key*modifier
+    new_key = key * modifier
 
     return bytes([
-        x^y for (x,y) in zip(
+        x ^ y for (x, y) in zip(
             text,
             new_key[:len_text])
-        ])
+    ])
 
 
 def challenge(count):
@@ -96,6 +97,7 @@ def challenge(count):
         return _inner
     return _challenge
 
+
 # Cooking MC's like a pound of bacon
 def is_ascii(x):
     import string
@@ -104,7 +106,9 @@ def is_ascii(x):
     xx = bytes(list(filter(lambda z:  z in bytearray(string.printable, 'utf8'), x)))
     return xx == x
 
+
 _filter = lambda z, w: list(filter(lambda x: x in bytearray(z, 'utf8'), w))
+
 
 # frequencies taken from wikipedia
 #  http://en.wikipedia.org/wiki/Letter_frequency
@@ -137,6 +141,7 @@ ENGLISH_FREQUENCIES = {
     'z':  0.1,
 }
 
+
 def how_much_is_actually_english(phrase):
     """Return a metric about the reality of the text be composed of english words
 
@@ -154,7 +159,7 @@ def how_much_is_actually_english(phrase):
 
     # calculate the difference between expected char count and actual number
     for key in ENGLISH_FREQUENCIES.keys():
-        expected_count = (phrase_length * ENGLISH_FREQUENCIES[key])/100.0
+        expected_count = (phrase_length * ENGLISH_FREQUENCIES[key]) / 100.0
         count = len(list(filter(lambda x: x in bytearray(key, 'utf8'), phrase)))
         # take into account only the letters actual are here
         if count == 0:
@@ -164,11 +169,12 @@ def how_much_is_actually_english(phrase):
     # now count how many characters are not in the english alphabet
     not_english_char = len(
         list(
-            filter(lambda x:x not in bytearray(''.join(ENGLISH_FREQUENCIES.keys()) + '\n,.\'" ', 'utf8'), phrase)
+            filter(lambda x: x not in bytearray(''.join(ENGLISH_FREQUENCIES.keys()) + '\n,.\'" ', 'utf8'), phrase)
         )
     )
 
-    return (difference + not_english_char * 10)/phrase_length
+    return (difference + not_english_char * 10) / phrase_length
+
 
 def break_one_char_xor(text, threshold=1):
     '''Return a list of possible breaked text ordered with more
@@ -176,22 +182,22 @@ def break_one_char_xor(text, threshold=1):
     results = []
 
     for c in range(256):
-        #print('  [D] key: %02x' % c)
+        # print('  [D] key: %02x' % c)
         key = bytes('%02x' % c, 'utf8')
         xored = xor(text, decode(key))
 
-        #print('  [D] \'%s\'' % xored)
+        # print('  [D] \'%s\'' % xored)
 
         score = how_much_is_actually_english(xored)
-        #print(xored)
-        #print('%s %f vs %f' % (key, min_score, score))
+        # print(xored)
+        # print('%s %f vs %f' % (key, min_score, score))
 
         results.append((score, xored, bytes([c])))
-
 
     import operator
 
     return sorted(results, key=operator.itemgetter(0))[:threshold]
+
 
 def hamming_distance(a, b):
     """Calculate the difference between two strings counted
@@ -199,6 +205,8 @@ def hamming_distance(a, b):
 
     >>> hamming_distance(b'\\x00', b'\\x01')
     1
+    >>> hamming_distance(b'this is a test', b'wokka wokka!!!')
+    37
     """
 
     result = 0
@@ -211,7 +219,7 @@ def hamming_distance(a, b):
         lenby = len(by)
 
         if lenbx < lenby:
-            bx , by = by, bx
+            bx, by = by, bx
 
         # bx > by
         # we add a number of "0" much as missing
@@ -224,6 +232,7 @@ def hamming_distance(a, b):
 
     return result
 
+
 def hamming_distance_bis(a, b):
     if len(a) != len(b):
         raise ValueError('the texts have different lengths')
@@ -231,38 +240,42 @@ def hamming_distance_bis(a, b):
     # calculate the number of 1s in the xor of the two texts
     return len(filter(lambda x: x == '1', ''.join([bin(x)[2:] for x in c])))
 
+
 def guess_keysize(text, start=2, end=41):
     '''Returns an ordered list of probably keysize for a supposed XORed plaintext
-    
+
     http://crypto.stackexchange.com/questions/8115/repeating-key-xor-and-hamming-distance
     '''
     results = []
     # for each keysize
     for keysize in range(start, end):
         distance = 0
-        block_n = int(math.floor(len(text)/keysize))
+        block_n = int(math.floor(len(text) / keysize))
         # calculate the average hamming distance
         for block_index in range(block_n):
             first_block = text[block_index * keysize:(block_index + 1) * keysize]
             second_block = text[(block_index + 1) * keysize:(block_index + 2) * keysize]
-            distance += hamming_distance(first_block, second_block)/keysize
+            distance += hamming_distance(first_block, second_block) / keysize
 
-        results.append([keysize, distance/block_n])
+        results.append([keysize, distance / block_n])
 
     import operator
 
     return sorted(results, key=operator.itemgetter(1))
+
 
 # http://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks-in-python
 def chunks(l, n):
     """ Yield successive n-sized chunks from l.
     """
     for i in range(0, len(l), n):
-        yield l[i:i+n]
+        yield l[i:i + n]
+
 
 def adjacent_chunks(l, n):
     for i in range(0, len(l) - (n - 1)):
-        yield l[i:i+n]
+        yield l[i:i + n]
+
 
 def find_multiple_occurences_positions(msg, chunk_size):
     """Returns a dictionary with the occurence of the chunks."""
@@ -288,6 +301,7 @@ def find_multiple_occurences_positions(msg, chunk_size):
 
     return idxs
 
+
 def find_multiple_occurences(msg, chunk_size):
     positions = find_multiple_occurences_positions(msg, chunk_size)
 
@@ -295,6 +309,7 @@ def find_multiple_occurences(msg, chunk_size):
         positions[key] = len(value)
 
     return positions
+
 
 def matrixify(data, size):
     """Transforms in an array a byte sequence.
@@ -309,11 +324,12 @@ def matrixify(data, size):
 
     Returns an iterator.
     """
-    for idx in range(0, math.ceil(len(data)/size)):
+    for idx in range(0, math.ceil(len(data) / size)):
         start_offset = idx * size
         end_offset = start_offset + size
 
         yield data[start_offset:end_offset]
+
 
 def transpose(m):
     """Transposes a matrix-like arrangeament of data.
@@ -359,13 +375,14 @@ def find_frequencies(text, size=1):
 
     freq = {}
     for k in count.keys():
-        freq[k] = count[k]/n
+        freq[k] = count[k] / n
 
     return freq
 
+
 def product(l):
     '''Generates all the concatenations from iterable.
-    
+
         >>> product([('A0', 'A1'), ('B0', 'B1')])
         [['A0', 'B0'], ['A1', 'B0'], ['A0', 'B1'], ['A1', 'B1']]
     '''
@@ -426,9 +443,10 @@ def pkcs7(message, block_size):
 
     logger.debug('pkcs7: #=%d with pad: %d' % (len_message, pad))
 
-    padding = bytes([pad,])*pad
+    padding = bytes([pad, ]) * pad
 
     return message + padding
+
 
 def depkcs7(message):
     '''Reverse the operation of pkcs7.
@@ -445,12 +463,14 @@ def depkcs7(message):
     # check that the padding make sense
     for i in range(1, pad + 1):
         if message[-i] != pad:
-            raise Exception('Padding wrong')# TODO: make custom exception
+            raise Exception('Padding wrong')  # TODO: make custom exception
 
     return message[:-pad]
+
 
 def generate_random_bytes(count):
     return b''.join([bytes([random.getrandbits(8)]) for x in range(count)])
 
+
 def generate_random_aes_key():
-	return generate_random_bytes(16)
+    return generate_random_bytes(16)
