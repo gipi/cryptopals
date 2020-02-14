@@ -24,5 +24,16 @@ class CryptoPals(object):
     def sets(self):
         return self._SETS.items()
 
+    def get_challenge(self, n):
+        for sn, challenges in self.sets():
+            for challenge in challenges:
+                if n == challenge.n:
+                    return sn, challenge
+
+    def exec(self, n):
+        sn, challenge = self.get_challenge(n)
+        print(challenge.func.__doc__)
+        challenge.func()
+
 
 cryptopals = CryptoPals()

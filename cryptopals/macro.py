@@ -31,11 +31,10 @@ to strings, they have a decode() method.
 **HERE ALL IS PASSED AS BYTES AND RETURNED AS BYTE**
 """
 import binascii
-import base64
 import math
-from Crypto.Random import random
-
 import logging
+
+from .utils import adjacent_chunks, chunks, generate_random_bytes
 
 _DEBUG = False
 
@@ -45,21 +44,23 @@ logger = logging.getLogger(__name__)
 
 
 # return an byte iterable from an hexadecimal representation
-decode = lambda x: bytearray(binascii.a2b_hex(x))
+hexdecode = lambda x: bytearray(binascii.a2b_hex(x))
 
 
 # return a hex "visual" representation by string of "x"
 # ENCODING: is the process by which information from a source is converted into symbols to be communicated.
 #           in our case we are trasmitting using ASCII/Base64 the binary data
-encode = lambda x: binascii.b2a_hex(x)
+hexencode = lambda x: binascii.b2a_hex(x)
 
 
-def decodeBase64file(filepath):
-    filecontents = ""
-    with open(filepath, 'rb') as f:
-        filecontents = base64.b64decode(f.read())
+def bitsencode(x):
+    '''Return from a bytearray a bits representation
 
-    return filecontents
+        >>> bitsencode(b'\\x10\\xAA')
+        '0001000010101010'
+
+    '''
+    return ''.join([f'{_:08b}' for _ in x])
 
 
 # return a representation of the XORing of two binary hexadecimal representation
@@ -175,7 +176,7 @@ def break_one_char_xor(text, threshold=1):
     for c in range(256):
         # print('  [D] key: %02x' % c)
         key = bytes('%02x' % c, 'utf8')
-        xored = xor(text, decode(key))
+        xored = xor(text, hexdecode(key))
 
         # print('  [D] \'%s\'' % xored)
 
@@ -253,19 +254,6 @@ def guess_keysize(text, start=2, end=41):
     import operator
 
     return sorted(results, key=operator.itemgetter(1))
-
-
-# http://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks-in-python
-def chunks(l, n):
-    """ Yield successive n-sized chunks from l.
-    """
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
-
-
-def adjacent_chunks(l, n):
-    for i in range(0, len(l) - (n - 1)):
-        yield l[i:i + n]
 
 
 def find_multiple_occurences_positions(msg, chunk_size):
@@ -457,10 +445,6 @@ def depkcs7(message):
             raise Exception('Padding wrong')  # TODO: make custom exception
 
     return message[:-pad]
-
-
-def generate_random_bytes(count):
-    return b''.join([bytes([random.getrandbits(8)]) for x in range(count)])
 
 
 def generate_random_aes_key():
