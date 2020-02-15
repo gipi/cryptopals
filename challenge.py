@@ -1,3 +1,4 @@
+import sys
 import base64
 import logging
 
@@ -312,6 +313,9 @@ def challenge13():
 
 
 if __name__ == "__main__":
+    choice = None
+    if len(sys.argv) == 2:
+        choice = int(sys.argv[1])
     from console import fg, fx, defx
     from console.screen import sc as screen
     from console.utils import wait_key, set_title, cls
@@ -344,6 +348,6 @@ if __name__ == "__main__":
             y += 1
 
     with screen.hidden_cursor():
-        choice = wait_key()
+        choice = wait_key() if not choice else choice
         cls()
         cryptopals.exec(int(choice))
