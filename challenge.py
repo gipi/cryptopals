@@ -20,7 +20,7 @@ def challenge_log(self, message, *args, **kwargs):
 logging.Logger.challenge = challenge_log
 
 logger = logging.getLogger()
-logger.setLevel(CHALLENGE)
+logger.setLevel('INFO')
 
 # http://stackoverflow.com/a/16955098/1935366
 
@@ -187,7 +187,7 @@ def challenge11():
     else:
         tipe = 'FOUND CBC'
 
-    logger.info(tipe)
+    assert(mode == tipe)
 
 
 @cryptopals.challenge(2, 12, 'Byte-at-a-time ECB decryption (Simple)')
@@ -232,7 +232,7 @@ def challenge12():
                 step += 1
                 break
 
-    logger.info(b'find out secret: ' + guessed)
+    print('find out secret: ' + guessed.decode())
 
 
 def parse_cookie(cookie):
