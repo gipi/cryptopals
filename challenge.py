@@ -99,20 +99,33 @@ def challenge4():
 
 @cryptopals.challenge(1, 5, 'Implement repeating-key XOR')
 def challenge5():
+    '''Implementation of a repeating-key XOR cipher.'''
     key = b'ICE'
     _in = b"""Burning 'em, if you ain't quick and nimble
 I go crazy when I hear a cymbal"""
-    assert encode(xor(_in,
-                      key)) == b'0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f'
+    ciphertext = xor(_in, key)
+    assert hexencode(ciphertext) \
+        == b'0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f'
+
+    print(bitsencode(_in)[:40])
+    print((bitsencode(key) * (len(_in) // len(key)))[:40])
+    print('-' * 40)
+    print(bitsencode(ciphertext)[:40])
 
 
 @cryptopals.challenge(1, 6, 'Break repeating-key XOR')
 def challenge6():
+    '''Now we are going to break a repeating-key XOR: it's not
+difficult, first of all you have to find the key length via minimization
+of the Hamming distance, then you can organize the ciphertext in chunk
+of KEYSIZE columns and break each column as a single-byte XOR cipher'''
     # https://gist.github.com/tqbf/3132752/raw/cecdb818e3ee4f5dda6f0847bfd90a83edb87e73/gistfile1.txt
     code = decodeBase64file('challenge6.txt')
 
-    break_vigenere.break_code(code)
+    results = break_vigenere.break_code(code, count=3)
+    most_probable = results[list(results.keys())[0]]
 
+    print(f'The most probable plaintext is \'{most_probable["plaintext"].decode()}\' with key \'{most_probable["key"]}\'')
 
 # _sets = [(x[0][1],x[1][1], x[2][1]) for x in breaked]
 #        permutation_sets = product(_sets)
@@ -120,6 +133,7 @@ def challenge6():
 #            m = transpose(x)
 #            print(b''.join(m)[:50])
 #            print()
+
 
 @cryptopals.challenge(1, 7, 'AES in ECB mode')
 def challenge7():
@@ -160,33 +174,38 @@ def challenge10():
 
 
 def encryption_oracle(plaintext):
+    import random
     key = generate_random_aes_key()
     iv = generate_random_aes_key()
 
-    cypher = None
-    if random.getrandbits(1):
-        logger.debug("CBC")
-        cypher = aes_cbc_encrypt(plaintext, key, iv)
-    else:
-        logger.debug("ECB")
-        cypher = aes_ecb_encrypt(plaintext, key, pad=True)
+    ciphertext = None
+    mode = None
 
-    return cypher
+    if random.getrandbits(1):
+        mode = "CBC"
+        ciphertext = aes_cbc_encrypt(plaintext, key, iv)
+    else:
+        mode = "ECB"
+        ciphertext = aes_ecb_encrypt(plaintext, key, pad=True)
+
+    return mode, ciphertext
 
 
 @cryptopals.challenge(2, 11, 'An ECB/CBC detection oracle')
 def challenge11():
     '''The point of this challenge is that if we control the plaintext
-    we can take apart ECB from CBC simply using repeated blocks'''
+we can take apart ECB from CBC simply using repeated blocks; look at
+the implemetation to find out how the magical "encryption oracle" works :P
+'''
     plaintext = b'''0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'''
 
-    ciphertext = encryption_oracle(generate_random_bytes(5) + plaintext + generate_random_bytes(3))
+    mode, ciphertext = encryption_oracle(generate_random_bytes(5) + plaintext + generate_random_bytes(3))
 
     tipe = None
     if _is_there_block_with_more_than_one_repetition(ciphertext, 4):
-        tipe = 'FOUND ECB'
+        tipe = 'ECB'
     else:
-        tipe = 'FOUND CBC'
+        tipe = 'CBC'
 
     assert(mode == tipe)
 
@@ -282,6 +301,16 @@ def decrypt_profile(key, ciphertext):
 
 @cryptopals.challenge(2, 13, 'ECB cut-and-paste')
 def challenge13():
+    '''Here something more pratical: we have a encoded profile data like
+
+    {
+      email: 'foo@bar.com',
+      uid: 10,
+      role: 'user'
+    }
+
+and we want to set 'role' to 'admin'.
+'''
     length_for_full_padding = 32 - len('email=&uid=10&role=user')
 
     key = generate_random_aes_key()

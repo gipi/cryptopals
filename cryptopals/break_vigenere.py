@@ -19,8 +19,10 @@ def break_code(code, count=10):
 
     logger.debug('keys: %s' % '\n'.join(['%d: %f' % (x[0], x[1]) for x in keys]))
 
+    results = {}
+
     # loop over keysizes
-    for key in keys:
+    for key, _ in zip(keys, range(count)):
         probable_keysize = key[0]
 
         logger.debug('key size: %d' % probable_keysize)
@@ -44,6 +46,13 @@ def break_code(code, count=10):
         result = b''.join(m)
 
         logger.debug(result)
+        results[probable_keysize] = {
+            'key_score': key[1],
+            'key': key_found,
+            'plaintext': result,
+        }
+
+    return results
 
 
 def usage(progname):
