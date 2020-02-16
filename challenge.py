@@ -310,9 +310,19 @@ def challenge13():
     }
 
 and we want to set 'role' to 'admin'.
+
+In the threat model the user can change her email at will and obtain the resulting
+ciphertext. Since it's encripted with ECB we can create custom blocks without problem
+and reordering them to obtain "arbitrary" profiles!
+
+  email=AAAAAAAAA& uid=10&role=user <padding       >   <--- here we get the padding
+  email=666@gmail. com&uid=10&role= user<padding   >   <--- here we get the email and uid and the start of role
+  email=AAAAAAAAAA admin&uid=10&rol e=user<padding >   <--- here we have the admin value (FIXME: probably we could set the padding directly here!)
+  email=AAAAAAAAAA AAAA&uid=10&role =user<padding  >   <--- here we get a closing =user (with a padding of 11 bytes)
 '''
     length_for_full_padding = 32 - len('email=&uid=10&role=user')
 
+    # generate the key for the oracle
     key = generate_random_aes_key()
 
     ciphertext = encrypted_profile(key, 'A' * length_for_full_padding)
@@ -336,7 +346,7 @@ and we want to set 'role' to 'admin'.
 
     plaintext = decrypt_profile(key, email_block + uid_role_block + admin_block + starting_with_equal_block + pad_block)
 
-    logger.info('plaintext: \'%s\'' % plaintext)
+    print(f'plaintext: \'{plaintext}\'')
 
     assert(plaintext['role'] == 'admin')
 
