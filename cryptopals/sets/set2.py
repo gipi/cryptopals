@@ -5,10 +5,24 @@ from ..meta import cryptopals
 from ..utils import decodeBase64file, generate_random_bytes, _is_there_block_with_more_than_one_repetition
 from ..cbc import aes_cbc_encrypt, aes_cbc_decrypt
 from ..ecb import aes_ecb_encrypt, aes_ecb_decrypt
+from ..paddings import pkcs7
 from ..macro import generate_random_aes_key
 
 
 logger = logging.getLogger(__name__)
+
+
+@cryptopals.challenge(2, 9, 'Implement PKCS#7 padding')
+def challenge9():
+    '''We are implementing basic PKCS#7 padding: if in a block are missing N bytes
+we pad with the number of bytes themself: for example if the block size is 20 bytes
+then the padded version for "YELLOW SUBMARINE" will be
+
+    "YELLOW SUBMARINE\\x04\\x04\\x04\\x04"
+'''
+    plaintex = b'YELLOW SUBMARINE'
+    plaintex_w_padding = b'YELLOW SUBMARINE\x04\x04\x04\x04'
+    assert pkcs7(plaintex, 20) == plaintex_w_padding
 
 
 @cryptopals.challenge(2, 10, 'Implement CBC mode')
