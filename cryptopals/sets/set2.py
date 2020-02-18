@@ -20,7 +20,7 @@ def challenge10():
 
     plaintext = aes_cbc_decrypt(ciphertext, key, iv)
 
-    logger.info('AES-CBC-128: %s' % plaintext)
+    print(f'plaintext: \'{plaintext.decode()}\'')
 
 
 def encryption_oracle(plaintext):
@@ -62,6 +62,20 @@ the implemetation to find out how the magical "encryption oracle" works :P
 
 @cryptopals.challenge(2, 12, 'Byte-at-a-time ECB decryption (Simple)')
 def challenge12():
+    '''Here we are trying to decrypt the "unknown-string" in the following construction
+
+    AES-128-ECB(your-string || unknown-string, random-key)
+
+This is possible using the following recipe:
+
+ 1. find out the block size (increase length of your-string until the ciphertext jumps of size)
+ 2. set your-string as a padding of length block_size - 1 and save the resulting ciphertext block
+ 3. loop over all the possible blocks with your-string set to the padding of the previous step
+    plus a variable last byte. One of the resulting ciphertext is equal to the one found in the
+    previous step, telling us the unknown-string's first byte.
+ 4. repeat step 3 and 4 using the recovered bytes in order to reduce the padding length until
+    you recover all the bytes.
+    '''
     secret_encoded_string = '''
     Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
     aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
@@ -70,13 +84,7 @@ def challenge12():
 
     secret_string = base64.b64decode(secret_encoded_string)
 
-    n = len(secret_string)
-
     key = generate_random_aes_key()
-
-    # for count in range(50):
-    # 	# use hex representation to have a quick view of length
-    # 	logger.info(encode(aes_ecb_encrypt(secret_string + b'A'*count, key, pad=True)))
 
     guessed = b''
     step = 0
@@ -102,7 +110,7 @@ def challenge12():
                 step += 1
                 break
 
-    print('find out secret: ' + guessed.decode())
+    print(f'unknown-string: \'{guessed.decode()}\'')
 
 
 def parse_cookie(cookie):
