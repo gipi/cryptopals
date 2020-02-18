@@ -5,7 +5,7 @@ from ..meta import cryptopals
 from ..utils import decodeBase64file, generate_random_bytes, _is_there_block_with_more_than_one_repetition
 from ..cbc import aes_cbc_encrypt, aes_cbc_decrypt
 from ..ecb import aes_ecb_encrypt, aes_ecb_decrypt
-from ..paddings import pkcs7
+from ..paddings import pkcs7, depkcs7, PaddingException
 from ..macro import generate_random_aes_key
 
 
@@ -221,3 +221,37 @@ and reordering them to obtain "arbitrary" profiles!
     print(f'plaintext: \'{plaintext}\'')
 
     assert(plaintext['role'] == 'admin')
+
+
+@cryptopals.challenge(2, 15, 'PKCS#7 padding validation')
+def challenge15():
+    '''Now we need to have a routine that validates a padded string via PKCS#7: for example
+
+    "ICE ICE BABY\\x04\\x04\\x04\\x04"
+
+is correctly padded, instead
+
+    "ICE ICE BABY\\x05\\x05\\x05\\x05"
+
+or
+
+    "ICE ICE BABY\\x01\\x02\\x03\\x04"
+
+should raise an exception.
+'''
+    correct = b'ICE ICE BABY\x04\x04\x04\x04'
+    wrongs = [
+        b'ICE ICE BABY\x05\x05\x05\x05',
+        b'ICE ICE BABY\x01\x02\x03\x04'
+    ]
+
+    assert depkcs7(correct) == b'ICE ICE BABY'
+
+    for wrong in wrongs:
+        raised = False
+        try:
+            depkcs7(wrong)
+        except PaddingException:
+            raised = True
+
+        assert raised
