@@ -38,7 +38,6 @@ from .utils import adjacent_chunks, chunks, generate_random_bytes
 
 _DEBUG = False
 
-logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
 
