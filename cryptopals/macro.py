@@ -255,40 +255,6 @@ def guess_keysize(text, start=2, end=41):
     return sorted(results, key=operator.itemgetter(1))
 
 
-def find_multiple_occurences_positions(msg, chunk_size):
-    """Returns a dictionary with the occurence of the chunks."""
-    idxs = {}
-    old_chunks = set()
-    for chunk in chunks(msg, chunk_size):
-        if chunk in old_chunks:
-            continue
-
-        old_chunks.add(chunk)
-
-        chunk_ids = []
-        tmp_msg = msg[:]
-        while True:
-            match = tmp_msg.find(chunk)
-            if match == -1:
-                idxs[chunk] = chunk_ids
-                break
-
-            chunk_ids.append(match)
-
-            tmp_msg = tmp_msg[match + 1:]
-
-    return idxs
-
-
-def find_multiple_occurences(msg, chunk_size):
-    positions = find_multiple_occurences_positions(msg, chunk_size)
-
-    for key, value in positions.items():
-        positions[key] = len(value)
-
-    return positions
-
-
 def matrixify(data, size):
     """Transforms in an array a byte sequence.
 

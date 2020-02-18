@@ -6,10 +6,9 @@ from ..macro import (
     hexencode,
     break_one_char_xor,
     xor,
-    find_multiple_occurences,
 )
 from .. import break_vigenere
-from ..utils import decodeBase64file
+from ..utils import decodeBase64file, _is_there_block_with_more_than_one_repetition
 from ..meta import cryptopals
 from ..ecb import aes_ecb_encrypt, aes_ecb_decrypt
 
@@ -130,11 +129,6 @@ def challenge7():
     key = b"YELLOW SUBMARINE"
     plaintext = aes_ecb_decrypt(cyphertext, key)
     print(f'plaintext: \'{plaintext.decode()}\'', )
-
-
-def _is_there_block_with_more_than_one_repetition(message, block_size):
-    m = find_multiple_occurences(message, block_size)
-    return len(list(filter(lambda x: x > 1, list(m.values())))) > 0
 
 
 @cryptopals.challenge(1, 8, 'Detect AES in ECB mode')

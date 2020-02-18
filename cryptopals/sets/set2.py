@@ -2,7 +2,7 @@ import logging
 import base64
 
 from ..meta import cryptopals
-from ..utils import decodeBase64file
+from ..utils import decodeBase64file, generate_random_bytes, _is_there_block_with_more_than_one_repetition
 from ..cbc import aes_cbc_encrypt, aes_cbc_decrypt
 from ..ecb import aes_ecb_encrypt, aes_ecb_decrypt
 from ..macro import generate_random_aes_key
