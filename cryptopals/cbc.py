@@ -4,10 +4,9 @@ set of challenges.
 from .macro import (
     xor,
     chunks,
-    pkcs7,
-    depkcs7,
 )
 from .ecb import aes_ecb_encrypt, aes_ecb_decrypt
+from .paddings import pkcs7, depkcs7
 import logging
 
 logger = logging.getLogger(__name__)

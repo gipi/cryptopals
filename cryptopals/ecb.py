@@ -1,10 +1,7 @@
 '''Implementation of the ECB mode using AES as cipher primitive
 '''
 from Crypto.Cipher import AES
-from .macro import (
-    pkcs7,
-    depkcs7,
-)
+from .paddings import pkcs7, depkcs7
 
 
 def aes_ecb_encrypt(plaintext, key, pad=False):
