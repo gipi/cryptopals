@@ -61,6 +61,17 @@ def generate_random_bytes(count):
     return b''.join([bytes([random.getrandbits(8)]) for x in range(count)])
 
 
+def generate_random_integer(start, end):
+    return random.randrange(start, end + 1)
+
+
+def generate_random_range(mn, mx):
+    a = generate_random_integer(mn, mx)
+    b = generate_random_integer(mn, mx)
+
+    return a, b if b > a else b, a
+
+
 def adjacent_chunks(l, n):
     for i in range(0, len(l) - (n - 1)):
         yield l[i:i + n]
