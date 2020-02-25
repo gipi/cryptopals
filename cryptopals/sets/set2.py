@@ -7,6 +7,7 @@ from ..cbc import aes_cbc_encrypt, aes_cbc_decrypt
 from ..ecb import aes_ecb_encrypt, aes_ecb_decrypt
 from ..paddings import pkcs7, depkcs7, PaddingException
 from ..macro import generate_random_aes_key
+from ..oracle import ecb_bruteforce, ecb_bruteforce_block_length
 
 
 logger = logging.getLogger(__name__)
@@ -100,29 +101,15 @@ This is possible using the following recipe:
 
     key = generate_random_aes_key()
 
-    guessed = b''
-    step = 0
+    def _oracle(_user_supplied_string):
+        logger.debug(f'input: {_user_supplied_string.hex()}')
+        return aes_ecb_encrypt(_user_supplied_string + secret_string, key, pad=True)
 
-    while len(guessed) < len(secret_string):
-        block_number = int(len(guessed) / 16)
-        prefix = b'A' * (15 - step % 16)
-        # the last byte in the first block is the first byte of the secret string
-        first_block = aes_ecb_encrypt(prefix + secret_string, key, pad=True)[block_number * 16:(block_number + 1) * 16]
+    block_length = ecb_bruteforce_block_length(_oracle)
 
-        for c in range(255):
-            if step < 16:
-                real_prefix = prefix + guessed
-            else:
-                base = step - 16 + 1
-                end = base + 15
-                real_prefix = guessed[base:end]
+    print(f'found block length equal to {block_length}')
 
-            guess = aes_ecb_encrypt(real_prefix + bytes([c]), key, pad=False)
-
-            if guess == first_block:
-                guessed = guessed + bytes([c])
-                step += 1
-                break
+    guessed = ecb_bruteforce(_oracle, block_length, 10)
 
     print(f'unknown-string: \'{guessed.decode()}\'')
 
