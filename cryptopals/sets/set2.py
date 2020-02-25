@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 
 @cryptopals.challenge(2, 9, 'Implement PKCS#7 padding')
 def challenge9():
-    '''We are implementing basic PKCS#7 padding: if in a block are missing N bytes
-we pad with the number of bytes themself: for example if the block size is 20 bytes
-then the padded version for "YELLOW SUBMARINE" will be
+    '''We are implementing basic PKCS#7 padding: if in a block are missing N
+    bytes we pad with the number of bytes themself: for example if the block
+    size is 20 bytes then the padded version for "YELLOW SUBMARINE" will be
 
     "YELLOW SUBMARINE\\x04\\x04\\x04\\x04"
 '''
@@ -77,19 +77,24 @@ the implemetation to find out how the magical "encryption oracle" works :P
 
 @cryptopals.challenge(2, 12, 'Byte-at-a-time ECB decryption (Simple)')
 def challenge12():
-    '''Here we are trying to decrypt the "unknown-string" in the following construction
+    '''
+    Here we are trying to decrypt the "unknown-string" in the following
+    construction
 
-    AES-128-ECB(your-string || unknown-string, random-key)
+        AES-128-ECB(your-string || unknown-string, random-key)
 
-This is possible using the following recipe:
+    This is possible using the following recipe:
 
- 1. find out the block size (increase length of your-string until the ciphertext jumps of size)
- 2. set your-string as a padding of length block_size - 1 and save the resulting ciphertext block
- 3. loop over all the possible blocks with your-string set to the padding of the previous step
-    plus a variable last byte. One of the resulting ciphertext is equal to the one found in the
-    previous step, telling us the unknown-string's first byte.
- 4. repeat step 3 and 4 using the recovered bytes in order to reduce the padding length until
-    you recover all the bytes.
+     1. find out the block size (increase length of your-string until the
+        ciphertext jumps of size)
+     2. set your-string as a padding of length block_size - 1 and save the
+        resulting ciphertext block
+     3. loop over all the possible blocks with your-string set to the padding
+        of the previous step plus a variable last byte. One of the resulting
+        ciphertext is equal to the one found in the previous step, telling us
+        the unknown-string's first byte.
+     4. repeat step 3 and 4 using the recovered bytes in order to reduce the
+        padding length until you recover all the bytes.
     '''
     secret_encoded_string = '''
     Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
