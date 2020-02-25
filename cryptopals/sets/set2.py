@@ -2,7 +2,7 @@ import logging
 import base64
 
 from ..meta import cryptopals
-from ..utils import decodeBase64file, generate_random_bytes, _is_there_block_with_more_than_one_repetition
+from ..utils import decodeBase64file, generate_random_bytes, generate_random_integer, _is_there_block_with_more_than_one_repetition
 from ..cbc import aes_cbc_encrypt, aes_cbc_decrypt
 from ..ecb import aes_ecb_encrypt, aes_ecb_decrypt
 from ..paddings import pkcs7, depkcs7, PaddingException
@@ -224,6 +224,126 @@ def challenge13():
     print(f'plaintext: \'{plaintext}\'')
 
     assert(plaintext['role'] == 'admin')
+
+
+@cryptopals.challenge(2, 14, 'Byte-at-a-time ECB decryption (Harder)')
+def challenge14():
+    '''
+    Now we have a different thing with respect to the #12: the oracle has the
+    following form
+
+        AES-128-ECB(random-prefix || attacker-controlled || secret-bytes, random-key)
+
+    and we need to find "secret-bytes". Since "random-prefix" with each
+    iteration changes also the length we need to be smart in order to break
+    this cipher!
+
+    The idea behind the procedure is that the "random-prefix" can only
+    influence the ciphertext for the blocks in which is contained. For sure
+    random-prefix has a maximum and minimum length possible and we can use our
+    controlled string to increase the plaintext length up to causing a
+    ciphertext with an increased number of blocks to appear.
+
+    How this can help? if we find a certain attacker-controlled string that
+    cause only one of the possible generated ciphertext to be one block more
+    than the other this means that we have the last block composed uniquely
+    with padding, and since equal plaintext corresponds to equal ciphertext we
+    have something to play with!
+
+    Using as the attacker-controlled string the plaintext of the padding block
+    now we have an oracle for when our string is aligned to the block: our
+    strategy is
+
+     - start with the user-controlled string equal to the plaintext of the
+       padding block
+     - iterate each step filtering wrt the ciphertext of the padding block
+     - add one byte to the right until you see a jump in the block size, call
+       this value offset_0
+     - use offset_0 - 15 and you'll have as last block
+
+       [random prefix][user-controlled][secret-byte][s\\x1f *15]
+
+    where "s" is the last byte of the secret-bytes.
+
+'''
+    secret_encoded_string = b'''
+    Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
+    aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
+    dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg
+    YnkK'''
+    secret_string = base64.b64decode(secret_encoded_string)
+    logger.debug(f'secret_string length: {len(secret_string)}')
+    r_min, r_max = 5, 35
+
+    def _generate_random_prefix():
+        r_length = generate_random_integer(r_min, r_max)
+        return generate_random_bytes(r_length)
+
+    key = generate_random_aes_key()
+    block_size = 16  # FIXME: this must be calculated
+
+    def _is_magic_length(_user_supplied, tries=300):
+        jumped_blocks = []
+        max_ = 0
+        for _ in range(tries):
+            _random_prefix = _generate_random_prefix()
+            ciphertext = aes_ecb_encrypt(_random_prefix + _user_supplied + secret_string, key, pad=True)
+            length = len(ciphertext) // block_size
+            logger.debug(f'{len(_user_supplied):02d} {len(_random_prefix):02d} {len(secret_string):02d} -- {length:02d} {_random_prefix} {ciphertext[-16:-1]}')
+            if length > max_:
+                max_ = length
+                jumped_blocks = [ciphertext[-16:]]
+            elif length == max_:
+                jumped_blocks.append(ciphertext[-16:])
+
+        return len(set(jumped_blocks)) == 1, jumped_blocks[0]
+
+    # we are logging for the final padding block of 16 bytes
+    block_padding = None
+    for count in range(0, 64):
+        logger.debug(f'trying {count} bytes')
+        is_magic, block_padding = _is_magic_length((b'A' * count))
+        if is_magic:
+            break
+
+    # put a check in place just to check something isn't going banana
+    if not is_magic:
+        raise ValueError('failure to find the magic number')
+
+    check_block_padding = aes_ecb_encrypt(b'\x10' * 0x10, key)  # FIXME: calculate block size
+
+    print(f'find magic for {count}, obtained padding block equal to \'{block_padding.hex()}\'')
+
+    if check_block_padding != block_padding:
+        raise ValueError(f'obtained {block_padding.hex()} "\
+            "but is different from {check_block_padding.hex()}')
+
+    block_size = 0x10
+
+    def _oracle(_user_text):
+        # using a padding block we can recognize where starts our input
+        # we use 'A' to be sure the random prefix doesn't interfere
+        _poison_block = bytes([0x41] + [block_size] * block_size)
+        _found = False
+        while not _found:
+            _random_prefix = _generate_random_prefix()
+            _ciphertext = aes_ecb_encrypt(
+                _random_prefix + _poison_block + _user_text + secret_string,
+                key,
+                pad=True)
+
+            _offset = (_ciphertext[:-16]).find(block_padding)
+            if _offset > -1:
+                return _ciphertext[_offset + block_size:]
+
+    b_length, c_length, offset = ecb_bruteforce_block_length(_oracle)
+    print(f'block size: {b_length}')
+
+    secret_length = c_length - b_length - offset
+    print(f'secret has length of {secret_length}')
+
+    recovered_secret = ecb_bruteforce(_oracle, b_length, secret_length)
+    print(f'secret: {recovered_secret.decode()}')
 
 
 @cryptopals.challenge(2, 15, 'PKCS#7 padding validation')
