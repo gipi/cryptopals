@@ -164,7 +164,10 @@ def profile_for(email):
 
 
 def encrypted_profile(key, email):
-    return aes_ecb_encrypt(bytes(encode_cookie(profile_for(email)), 'utf-8'), key, pad=True)
+    return aes_ecb_encrypt(
+        bytes(encode_cookie(profile_for(email)), 'utf-8'),
+        key,
+        pad=True)
 
 
 def decrypt_profile(key, ciphertext):
@@ -181,16 +184,16 @@ def challenge13():
       role: 'user'
     }
 
-and we want to set 'role' to 'admin'.
+    and we want to set 'role' to 'admin'.
 
-In the threat model the user can change her email at will and obtain the resulting
-ciphertext. Since it's encripted with ECB we can create custom blocks without problem
-and reordering them to obtain "arbitrary" profiles!
+    In the threat model the user can change her email at will and obtain the
+    resulting ciphertext. Since it's encripted with ECB we can create custom
+    blocks without problem and reordering them to obtain "arbitrary" profiles!
 
-  email=AAAAAAAAA& uid=10&role=user <padding       >   <--- here we get the padding
-  email=666@gmail. com&uid=10&role= user<padding   >   <--- here we get the email and uid and the start of role
-  email=AAAAAAAAAA admin&uid=10&rol e=user<padding >   <--- here we have the admin value (FIXME: probably we could set the padding directly here!)
-  email=AAAAAAAAAA AAAA&uid=10&role =user<padding  >   <--- here we get a closing =user (with a padding of 11 bytes)
+      email=AAAAAAAAA& uid=10&role=user <padding       >   <--- here we get the padding
+      email=666@gmail. com&uid=10&role= user<padding   >   <--- here we get the email and uid and the start of role
+      email=AAAAAAAAAA admin&uid=10&rol e=user<padding >   <--- here we have the admin value (FIXME: probably we could set the padding directly here!)
+      email=AAAAAAAAAA AAAA&uid=10&role =user<padding  >   <--- here we get a closing =user (with a padding of 11 bytes)
 '''
     length_for_full_padding = 32 - len('email=&uid=10&role=user')
 
