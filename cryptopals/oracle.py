@@ -15,6 +15,13 @@ def ecb_bruteforce_block_length(oracle, limit=64):
     Args:
         oracle: the actual function that produces ciphertext, must take the
                 user supplied string as first argument
+        limit: the upper limit for the search space
+
+    Returns:
+        block_length, length, count : a tuple with the obtained block_length
+                     the length of the ciphertext with a final block composed
+                     only by padding and the length of the user controlled
+                     string to obtain such configuration.
     '''
     block_length = None
     length = None
