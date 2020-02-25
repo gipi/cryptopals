@@ -106,15 +106,23 @@ def challenge12():
 
     key = generate_random_aes_key()
 
+    # this is the oracle that returns to us the ciphertext
     def _oracle(_user_supplied_string):
         logger.debug(f'input: {_user_supplied_string.hex()}')
-        return aes_ecb_encrypt(_user_supplied_string + secret_string, key, pad=True)
+        return aes_ecb_encrypt(
+            _user_supplied_string + secret_string,
+            key,
+            pad=True)
 
-    block_length = ecb_bruteforce_block_length(_oracle)
+    block_length, ciphertext_length, offset = \
+        ecb_bruteforce_block_length(_oracle)
+
+    secret_length = ciphertext_length - block_length - offset
 
     print(f'found block length equal to {block_length}')
+    print(f'found secret length equal to {secret_length}')
 
-    guessed = ecb_bruteforce(_oracle, block_length, 10)
+    guessed = ecb_bruteforce(_oracle, block_length, secret_length)
 
     print(f'unknown-string: \'{guessed.decode()}\'')
 
