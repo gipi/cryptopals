@@ -6,7 +6,7 @@ from ..utils import decodeBase64file, generate_random_bytes, generate_random_int
 from ..cbc import aes_cbc_encrypt, aes_cbc_decrypt
 from ..ecb import aes_ecb_encrypt, aes_ecb_decrypt
 from ..paddings import pkcs7, depkcs7, PaddingException
-from ..macro import generate_random_aes_key
+from ..macro import generate_random_aes_key, xor
 from ..oracle import ecb_bruteforce, ecb_bruteforce_block_length
 
 
@@ -378,3 +378,106 @@ should raise an exception.
             raised = True
 
         assert raised
+
+
+def build_query(user_input):
+    '''
+        >>> build_query(b'miao')
+        b'comment1=cooking%20MCs;userdata=miao;comment2=%20like%20a%20pound%20of%20bacon'
+        >>> build_query(b'bau;')
+        b'comment1=cooking%20MCs;userdata=bau;comment2=%20like%20a%20pound%20of%20bacon'
+        >>> build_query(b'foo=kebab;')
+        b'comment1=cooking%20MCs;userdata=fookebab;comment2=%20like%20a%20pound%20of%20bacon'
+
+    '''
+    def _quote(_input):
+        return _input.replace(b'=', b'').replace(b';', b'')
+
+    return b'comment1=cooking%20MCs;userdata=' \
+        + _quote(user_input) \
+        + b';comment2=%20like%20a%20pound%20of%20bacon'
+
+
+@cryptopals.challenge(2, 16, 'CBC bitflipping attacks')
+def challenge16():
+    '''
+    We need to break the cipher (CBC THIS TIME!) and to do that we need to know
+    how the CBC decryption works: below a diagram for the decription of the
+    ith + 1 block, as you can see it involves the ciphertext from the previous
+    block
+
+       Ci                      Ci+1
+       |                       |
+       |-----------.           |
+    .-------.      |       .-------.
+    |  AES  |      |       |  AES  |
+    '-------'      |       '-------'
+        |          |           |
+        +          '-----------+
+        |                      |
+       \ /                    \ /
+        '                      '
+        Pi                     Pi+1
+
+    This means that Pi+1 = Ci <+> Dec_k(Ci+1) but we know Pi+1 and Ci so we
+    have Dec_k(Ci+1) and to obtain P'i+1 we can calculate P'i+1 <+> Pi+1 = H
+    and xor it with Ci so to obtain
+
+        Ci <+> H <+> Dec_k(Ci+1) = Pi+1 <+> H = P'i+1
+
+    The tricky part is that we don't know precisely where our plaintext starts
+    inside the final plaintext but that is only a guess (polynomial) work: we
+    uses a user input large as a block and composed of the same characters, at
+    that point we can "rotate" the xor until the offset is right ;)
+    '''
+    key = generate_random_aes_key()
+    iv  = generate_random_aes_key()
+
+    def _oracle_encrypt(_user_input):
+        return aes_cbc_encrypt(build_query(_user_input), key, iv)
+
+    def _oracle_decrypt(_ciphertext):
+        return aes_cbc_decrypt(_ciphertext, key, iv)
+
+    def _is_admin(_ciphertext):
+        _plaintext = _oracle_decrypt(_ciphertext)
+        logger.debug(_plaintext)
+
+        return b';admin=true;' in _plaintext
+
+    b_length, length, offset = ecb_bruteforce_block_length(_oracle_encrypt)
+
+    logger.debug(f'block length: {b_length}')
+
+    def _rotate(_text):
+        return _text[1:] + _text[:1]
+
+    # try to match up a block
+    poison_msg = b'A' * b_length
+    xored = xor(poison_msg, b';admin=true;')
+
+    # get a "good" ciphertext to play with
+    ciphertext = _oracle_encrypt(poison_msg)
+
+    escalated = False
+    for index in range((len(ciphertext) // b_length)):
+        for offset in range(b_length):
+            xored = _rotate(xored)
+            poison_ciphertext = \
+                ciphertext[b_length * index:b_length * (index + 1)] \
+                + xor(
+                    xored,
+                    ciphertext[b_length * (index + 1):b_length * (index + 2)]) \
+                + ciphertext[b_length * (index + 2):]
+
+            if _is_admin(poison_ciphertext):
+                escalated = True
+                break
+
+        if escalated:
+            break
+
+    if not escalated:
+        raise ValueError('something went wrong :(')
+
+    print(f'SUCCESS!! we escalated with a poisonous block \'{xored.hex()}\'')
