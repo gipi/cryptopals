@@ -250,21 +250,10 @@ def challenge14():
     with padding, and since equal plaintext corresponds to equal ciphertext we
     have something to play with!
 
-    Using as the attacker-controlled string the plaintext of the padding block
-    now we have an oracle for when our string is aligned to the block: our
-    strategy is
-
-     - start with the user-controlled string equal to the plaintext of the
-       padding block
-     - iterate each step filtering wrt the ciphertext of the padding block
-     - add one byte to the right until you see a jump in the block size, call
-       this value offset_0
-     - use offset_0 - 15 and you'll have as last block
-
-       [random prefix][user-controlled][secret-byte][s\\x1f *15]
-
-    where "s" is the last byte of the secret-bytes.
-
+    At this point the strategy is to prepend attacker-controlled with the
+    plaintext padding (prefixed with a single byte to avoid collision)
+    and and use only the ciphertext that have the padding block not as a
+    last block: we have now the same situation of challenge 12 :P
 '''
     secret_encoded_string = b'''
     Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
