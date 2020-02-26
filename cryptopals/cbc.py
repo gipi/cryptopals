@@ -10,7 +10,6 @@ from .paddings import pkcs7, depkcs7
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 def cbc_decrypt(ciphertext, key, iv, cipher_func):
