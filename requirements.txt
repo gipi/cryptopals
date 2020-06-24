@@ -1,1 +1,2 @@
+console==0.990
 pycryptodome==3.9.6
