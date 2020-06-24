@@ -366,3 +366,8 @@ def product(l):
 
 def generate_random_aes_key():
     return generate_random_bytes(16)
+
+
+def generate_random_aes_IV():
+    return generate_random_bytes(16)
+
