@@ -9,6 +9,7 @@ from ..macro import generate_random_aes_key, generate_random_aes_IV
 from ..cbc import aes_cbc_encrypt, aes_cbc_decrypt
 from ..paddings import PaddingException
 from ..oracle import get_block, cbc_bruteforce_padding
+from ..ctr import ctr_decrypt
 
 
 logger = logging.getLogger(__name__)
@@ -133,3 +134,17 @@ def challenge17():
     print(plaintext.decode('utf-8'))
 
     assert game.plaintext == plaintext, f"{plaintext=} != {game.plaintext=}"
+
+
+@cryptopals.challenge(3, 18, "Implement CTR, the stream cipher mode")
+def challenge18() -> None:
+    """
+    We are going to explore the CTR mode, it transform a block cipher in a
+    stream cipher with very little effort :)
+    """
+    ciphertext = base64.b64decode("L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/"
+                                  "2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ==")
+
+    plaintext = ctr_decrypt(b"YELLOW SUBMARINE", b'\x00', ciphertext)
+
+    print(plaintext)
