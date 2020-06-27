@@ -1,4 +1,6 @@
 import logging
+from typing import Callable
+from .paddings import depkcs7
 
 
 logger = logging.getLogger(__name__)
@@ -89,3 +91,76 @@ def ecb_bruteforce(oracle, block_length, secret_length):
             raise ValueError(f'bruteforcing failed! recovered {len(guessed)} bytes guessed: \'{guessed.decode()}\'')
 
     return guessed
+
+
+def xored_padding(count, block_length):
+    original = bytes((block_length - count) * [0x00] + count * [count])
+    next = bytes((block_length - count) * [0x00] + count * [count + 1])
+
+    return bytes([_a ^ _b for _a, _b in zip(original, next)])
+
+
+def cbc_bruteforce_padding_single_block(block0, block1,
+                                        block_size: int, oracle):
+    """Bruteforce a CBC block using a padding oracle"""
+    plaintext_block = []
+    idx_inside_block = block_size - 1
+
+    while idx_inside_block > -1:
+        padding_value = block_size - idx_inside_block
+        logger.debug(f'''{idx_inside_block=} {padding_value=}''')
+        # try 0 as last resort to avoid having a false positive
+        for b in list(range(1, 256)) + [0]:
+            block0_modified = block0[:idx_inside_block] + \
+                bytes([b ^ block0[idx_inside_block]]) + \
+                block0[idx_inside_block + 1:]
+            # 
+            c = block0_modified + block1
+            if oracle.check_padding(c):
+                break
+
+        original = b ^ padding_value
+
+        plaintext_block.append(bytes([original]))
+
+        logger.debug(f'{b=:x} "{chr(original)}" ({hex(original)})')
+
+        idx_inside_block -= 1
+        xor_mask = xored_padding(padding_value, block_size)
+        block0 = bytes([a ^ b for a, b in zip(xor_mask, block0_modified)])
+
+    return plaintext_block[::-1]
+
+
+def cbc_bruteforce_padding(iv, ciphertext, block_size, 
+                           oracle: Callable[[], str]):
+    """Bruteforces the (iv, ciphertext) using a padding oracle"""
+    # we use the iv as the starting block
+    blocks = iv + ciphertext
+
+    n_blocks = len(blocks) // block_size
+
+    resolved_block = 0
+
+    plaintext_bytes = []
+
+    # we need to resolve all but the first block (that is the iv)
+    while resolved_block < (n_blocks - 1):
+        logger.debug(f'''resolved block: {resolved_block}''')
+
+        block0 = get_block(blocks, resolved_block, block_size)
+        block1 = get_block(blocks, resolved_block + 1, block_size)
+
+        plaintext_block = cbc_bruteforce_padding_single_block(
+            block0,
+            block1,
+            block_size,
+            oracle)
+
+        # remember that the byte are revealed in reverse
+        plaintext_bytes.extend(plaintext_block)
+        logger.debug(f'original plaintext: {b"".join(plaintext_bytes).decode("utf-8")}')
+
+        resolved_block += 1
+
+    return depkcs7(b"".join(plaintext_bytes))
