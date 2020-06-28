@@ -1,3 +1,6 @@
+from typing import Callable
+
+
 class Challenge(object):
 
     def __init__(self, number, description, func):
@@ -9,7 +12,7 @@ class Challenge(object):
 class CryptoPals(object):
     _SETS = {}
 
-    def challenge(self, _set, count, title):
+    def challenge(self, _set, count, title) -> Callable:
 
         def _challenge(x):
             s = self._SETS.setdefault(_set, [])
