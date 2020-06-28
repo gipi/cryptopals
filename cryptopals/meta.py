@@ -32,6 +32,9 @@ class CryptoPals(object):
 
     def exec(self, n):
         sn, challenge = self.get_challenge(n)
+        if not challenge.func.__doc__:
+            raise AttributeError(
+                f"challenge {n} doesn't have a docstring attached!")
         print(challenge.func.__doc__)
         challenge.func()
 
