@@ -34,6 +34,10 @@ if __name__ == "__main__":
     choice = None
     if len(sys.argv) == 2:
         choice = int(sys.argv[1])
+
+    if choice is not None:
+        cryptopals.exec(int(choice))
+        sys.exit(0)
     # https://mixmastamyk.bitbucket.io/
     from console import fg, fx, defx
     from console.screen import sc as screen
