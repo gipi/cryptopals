@@ -62,8 +62,7 @@ def bitsencode(x):
     return ''.join([f'{_:08b}' for _ in x])
 
 
-# return a representation of the XORing of two binary hexadecimal representation
-def xor(text, key):
+def xor(text: bytes, key: bytes):
     """XORs a text with a key.
 
     The text dominates over key so that the lengths don't match we can choose
