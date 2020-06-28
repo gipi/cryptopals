@@ -44,9 +44,15 @@ def depkcs7(message):
         >>> depkcs7(b'\\x00\\x00\\x00\\x00\\x04\\x04\\x04')
         Traceback (most recent call last):
             ...
-        Exception: Padding wrong
+        paddings.PaddingException: wrong padding
+        >>> depkcs7(b'\\x00\\x00\\x00\\x00\\x04\\x04\\x00')
+        Traceback (most recent call last):
+            ...
+        paddings.PaddingException: wrong padding
     '''
     pad = int(message[-1])
+    if pad == 0:
+        raise PaddingException('wrong padding')  # TODO: make custom exception
 
     # check that the padding makes sense
     for i in range(1, pad + 1):
