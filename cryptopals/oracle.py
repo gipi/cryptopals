@@ -100,8 +100,17 @@ def xored_padding(count, block_length):
     return bytes([_a ^ _b for _a, _b in zip(original, next)])
 
 
+from typing import Protocol
+
+
+class OracleProtocol(Protocol):
+    def check_padding(self, ciphertext: bytes) -> bool:
+        pass
+
+
 def cbc_bruteforce_padding_single_block(block0, block1,
-                                        block_size: int, oracle):
+                                        block_size: int,
+                                        oracle: OracleProtocol):
     """Bruteforce a CBC block using a padding oracle"""
     plaintext_block = []
     idx_inside_block = block_size - 1
@@ -133,7 +142,7 @@ def cbc_bruteforce_padding_single_block(block0, block1,
 
 
 def cbc_bruteforce_padding(iv, ciphertext, block_size, 
-                           oracle: Callable[[], str]):
+                           oracle: OracleProtocol):
     """Bruteforces the (iv, ciphertext) using a padding oracle"""
     # we use the iv as the starting block
     blocks = iv + ciphertext
