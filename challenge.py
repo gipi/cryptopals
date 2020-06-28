@@ -6,6 +6,9 @@ from cryptopals.meta import cryptopals
 from cryptopals import sets
 
 
+logging.basicConfig()
+
+
 CHALLENGE = 5
 logging.addLevelName(CHALLENGE, 'CHALLENGE')
 
@@ -18,6 +21,11 @@ logging.Logger.challenge = challenge_log
 
 logger = logging.getLogger()
 logger.setLevel('INFO')
+logger_cryptopals = logging.getLogger('cryptopals.sets')
+logger_cryptopals.setLevel('INFO')
+
+logger_cryptopals_oracle = logging.getLogger('cryptopals.oracle')
+logger_cryptopals_oracle.setLevel('INFO')
 
 # http://stackoverflow.com/a/16955098/1935366
 
