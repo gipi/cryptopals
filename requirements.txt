@@ -1,2 +1,2 @@
 console==0.990
-pycryptodome==3.9.6
+pycryptodome==3.19.1
